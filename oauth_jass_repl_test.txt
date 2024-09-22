@@ -1,0 +1,4 @@
+sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
+clientId="test" \
+clientSecret="test" \
+scope="api://test/.default";
