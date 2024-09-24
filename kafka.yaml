@@ -1,0 +1,40 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: Kafka
+metadata:
+  name: kafka
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.kafka.replicas }}
+  image:
+    application: {{ .Values.kafka.image.application }}
+    init: {{ .Values.kafka.image.init }}
+  dataVolumeCapacity: {{ .Values.kafka.dataVolumeCapacity }}
+  tls:
+    secretRef: {{ .Values.kafka.tlsSecret }}
+  listeners:
+    internal:
+      authentication:
+        type: {{ .Values.kafka.listeners.internal.authentication.type }}
+        jaasConfig:
+          secretRef: {{ .Values.kafka.listeners.internal.authentication.jaasSecret }}
+      tls:
+        enabled: {{ .Values.kafka.listeners.internal.tls.enabled }}
+    external:
+      authentication:
+        type: {{ .Values.kafka.listeners.external.authentication.type }}
+        jaasConfig:
+          secretRef: {{ .Values.kafka.listeners.external.authentication.jaasSecret }}
+      tls:
+        enabled: {{ .Values.kafka.listeners.external.tls.enabled }}
+      externalAccess:
+        type: {{ .Values.kafka.listeners.external.externalAccess.type }}
+        loadBalancer:
+          domain: {{ .Values.kafka.listeners.external.externalAccess.domain }}
+          brokerPrefix: {{ .Values.kafka.listeners.external.externalAccess.brokerPrefix }}
+          bootstrapPrefix: {{ .Values.kafka.listeners.external.externalAccess.bootstrapPrefix }}
+  authorization:
+    type: {{ .Values.kafka.authorization.type }}
+    superUsers:
+{{- range .Values.kafka.authorization.superUsers }}
+      - {{ . }}
+{{- end }}
