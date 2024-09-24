@@ -1,0 +1,134 @@
+# Global settings for all components
+global:
+  namespace: confluent
+  domain: randomthat.com
+
+# KRaftController settings
+kraftcontroller:
+  enabled: true
+  replicas: 3
+  dataVolumeCapacity: 10G
+  image:
+    application: docker.io/confluentinc/cp-server:7.7.0
+    init: confluentinc/confluent-init-container:2.9.0
+
+# Kafka settings
+kafka:
+  enabled: true
+  replicas: 3
+  image:
+    application: confluentinc/cp-server:7.7.0
+    init: confluentinc/confluent-init-container:2.9.0
+  dataVolumeCapacity: 10Gi
+  tlsSecret: tls-group1
+  listeners:
+    internal:
+      authentication:
+        type: plain
+        jaasSecret: credential
+      tls:
+        enabled: true
+    external:
+      authentication:
+        type: plain
+        jaasSecret: credential
+      tls:
+        enabled: true
+      externalAccess:
+        type: loadBalancer
+        domain: "{{ .Values.global.domain }}"
+        brokerPrefix: rb
+        bootstrapPrefix: rb
+  authorization:
+    enabled: true
+    type: rbac
+    superUsers:
+      - User:kafka
+
+# Control Center settings
+controlcenter:
+  enabled: true
+  replicas: 1
+  image:
+    application: confluentinc/cp-enterprise-control-center:7.7.0
+    init: confluentinc/confluent-init-container:2.9.0
+  dataVolumeCapacity: 10Gi
+  externalAccess:
+    type: loadBalancer
+    domain: "{{ .Values.global.domain }}"
+    prefix: rb-c3
+  tlsSecret: tls-group1
+  dependencies:
+    kafka:
+      bootstrapEndpoint: kafka.confluent.svc.cluster.local:9071
+      authentication:
+        type: plain
+        jaasSecret: credential
+      tls:
+        enabled: true
+    mds:
+      tokenSecret: mds-token
+      authentication:
+        type: bearer
+        bearerSecret: c3-mds-client
+      tls:
+        enabled: true
+    connect:
+      url: https://connect.confluent.svc.cluster.local:8083
+      tls:
+        enabled: true
+    ksqldb:
+      url: https://ksqldb.confluent.svc.cluster.local:8088
+      tls:
+        enabled: true
+    schemaRegistry:
+      url: https://schemaregistry.confluent.svc.cluster.local:8081
+      tls:
+        enabled: true
+
+# Kafka Connect settings
+connect:
+  enabled: true
+  replicas: 1
+  image:
+    application: confluentinc/cp-server-connect:7.7.0
+    init: confluentinc/confluent-init-container:2.9.0
+  dependencies:
+    kafka:
+      bootstrapEndpoint: kafka:9071
+
+# KSQLDB settings
+ksqldb:
+  enabled: true
+  replicas: 1
+  image:
+    application: confluentinc/cp-ksqldb-server:7.7.0
+    init: confluentinc/confluent-init-container:2.9.0
+  dataVolumeCapacity: 10Gi
+
+# Schema Registry settings
+schemaregistry:
+  enabled: true
+  replicas: 3
+  image:
+    application: confluentinc/cp-schema-registry:7.7.0
+    init: confluentinc/confluent-init-container:2.9.0
+
+# Kafka REST Proxy settings
+kafkarestproxy:
+  enabled: true
+  replicas: 1
+  image:
+    application: confluentinc/cp-kafka-rest:7.7.0
+    init: confluentinc/confluent-init-container:2.9.0
+  dependencies:
+    schemaRegistry:
+      url: https://schemaregistry.confluent.svc.cluster.local:8081
+
+# Kafka REST Class settings
+kafkarestclass:
+  enabled: true
+  kafkaRest:
+    authentication:
+      type: bearer
+      bearerSecret: rest-credential
