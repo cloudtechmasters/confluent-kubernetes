@@ -1,0 +1,52 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: ControlCenter
+metadata:
+  name: controlcenter
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.controlcenter.replicas }}
+  image:
+    application: {{ .Values.controlcenter.image.application }}
+    init: {{ .Values.controlcenter.image.init }}
+  dataVolumeCapacity: {{ .Values.controlcenter.dataVolumeCapacity }}
+  externalAccess:
+    type: {{ .Values.controlcenter.externalAccess.type }}
+    loadBalancer:
+      domain: {{ .Values.controlcenter.externalAccess.domain }}
+      prefix: {{ .Values.controlcenter.externalAccess.prefix }}
+  tls:
+    secretRef: {{ .Values.controlcenter.tlsSecret }}
+  dependencies:
+    kafka:
+      bootstrapEndpoint: {{ .Values.controlcenter.dependencies.kafka.bootstrapEndpoint }}
+      authentication:
+        type: {{ .Values.controlcenter.dependencies.kafka.authentication.type }}
+        jaasConfig:
+          secretRef: {{ .Values.controlcenter.dependencies.kafka.authentication.jaasSecret }}
+      tls:
+        enabled: {{ .Values.controlcenter.dependencies.kafka.tls.enabled }}
+    mds:
+      tokenKeyPair:
+        secretRef: {{ .Values.controlcenter.dependencies.mds.tokenSecret }}
+      authentication:
+        type: {{ .Values.controlcenter.dependencies.mds.authentication.type }}
+        bearer:
+          secretRef: {{ .Values.controlcenter.dependencies.mds.bearerSecret }}
+      tls:
+        enabled: {{ .Values.controlcenter.dependencies.mds.tls.enabled }}
+    connect:
+{{- range .Values.controlcenter.dependencies.connect }}
+      url: {{ .url }}
+      tls:
+        enabled: {{ .tls.enabled }}
+{{- end }}
+    ksqldb:
+{{- range .Values.controlcenter.dependencies.ksqldb }}
+      url: {{ .url }}
+      tls:
+        enabled: {{ .tls.enabled }}
+{{- end }}
+    schemaRegistry:
+      url: {{ .Values.controlcenter.dependencies.schemaRegistry.url }}
+      tls:
+        enabled: {{ .Values.controlcenter.dependencies.schemaRegistry.tls.enabled }}
